@@ -152,6 +152,7 @@ void newHand()
 		}
 
 		iter->SetIsFolded(false);
+		iter->SetAllInFlag(false);
 		iter->SetToCall(0);
 	}
 
