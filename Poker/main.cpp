@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 #include "Player.h"
+#include "Card.h"
 
 int pot;
 int bBlindBet;
@@ -273,6 +274,10 @@ void renderBoard()
 	}
 
 	cout << "1) check/call" << " <$" << Current->GetToCall() << ">" << "  2) raise  3)fold  4)outcome  5)exit" << endl << "Input : ";
+
+	Card myCard(FIVE, DIAMOND);
+
+	cout << myCard;
 }
 
 int main()
