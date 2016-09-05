@@ -23,12 +23,13 @@ void processInput();
 void playerTurnChange();
 void newHand();
 void DeductBlinds();
-bool CheckAllFold();
+bool CheckAllOut();
 void GetWinner();
 void GetRaise();
 string turnIndicate(vector<Player>::iterator iter);
 string blindIndicate(vector<Player>::iterator iter);
 string foldedIndicate(vector<Player>::iterator iter);
+string AllInIndicate(vector<Player>::iterator iter);
 string GetNewName(int number);
 void PopulateList(unsigned int num, int balance);
 
@@ -62,12 +63,21 @@ string foldedIndicate(vector<Player>::iterator iter)
 	return "";
 }
 
+string AllInIndicate(vector<Player>::iterator iter)
+{
+	if (iter->GetAllInFlag())
+	{
+		return " All In";
+	}
+	return "";
+}
+
 //Returns true of all people have folded, false if not
-bool CheckAllFold()
+bool CheckAllOut()
 {
 	for (vector<Player>::iterator iter = Players.begin(); iter != Players.end(); iter++)
 	{
-		if (!iter->GetIsFolded())
+		if (!iter->GetIsFolded() && !iter->GetAllInFlag())
 			return false;
 	}
 	return true;
@@ -126,27 +136,33 @@ void newHand()
 		I couldn't find a work around for invalidating vectors, so I save dealer from a iterator to a index, then back from a index to a iterator after deletion of elements
 	*/
 
+	vector<vector<Player>::iterator> toDelete;
 	unsigned int dealerIndex = 0;
 
 	for (vector<Player>::iterator iter = Players.begin(); iter != Players.end(); iter++)
 	{
-		if (dealer == iter)
-		{
-			dealerIndex = Players.begin() - iter;				//Save the index of the dealer once we find it
-		}
-
 		if (iter->GetBalance() <= 0)
 		{
-			if (dealerIndex > Players.begin() - iter)			//This will only happen after the dealer has been saved so its safe (dealer = iter before dealer > iter)
-				dealerIndex--;									//If dealer is to be shifted, move it so it keeps track of the same person
+			toDelete.push_back(iter);							//Mark this element for deletion
+		}
 
-			iter = Players.erase(iter);							//iter will now point to the element after the one it erased
-		}
-		else													//Else is important as we dont want to edit what iter points to after its erased what it pointed to
+		if (iter == dealer)
 		{
-			iter->SetIsFolded(false);
-			iter->SetToCall(0);
+			dealerIndex = Players.begin() - iter;				//Get the index of the dealer
 		}
+
+		iter->SetIsFolded(false);
+		iter->SetToCall(0);
+	}
+
+	for (int index = toDelete.size(); index-- > 0; )
+	{
+		if (dealerIndex > index)
+		{
+			dealerIndex--;										//If the dealer's real index is about to be moved by the erase, adjust dealerIndex to reflect this
+		}
+
+		Players.erase(toDelete[index]);
 	}
 
 	dealer = Players.begin() + dealerIndex;						//Turn the index back into the iterator
@@ -166,7 +182,7 @@ void newHand()
 
 void playerTurnChange()
 {
-	if (CheckAllFold())
+	if (CheckAllOut())
 	{
 		return;							//Saftey check to avoid infinite loop
 	}
@@ -174,7 +190,7 @@ void playerTurnChange()
 	do
 	{
 		Current = Next(Current);
-	} while (Current->GetIsFolded());
+	} while (Current->GetIsFolded() || Current->GetAllInFlag());
 }
 
 void GetRaise()
@@ -215,7 +231,7 @@ void processInput()
 		break;
 	}
 
-	if (CheckAllFold())
+	if (CheckAllOut())
 		GetWinner();
 	playerTurnChange();
 }
@@ -245,17 +261,14 @@ void GetWinner()
 
 void renderBoard()
 {
-	system("CLS");
+	system("CLS"); //
 	cout << "----------------------" << endl << "Pot : $" << pot << endl << "----------------------" << endl;
 	
 	for (vector<Player>::iterator iter = Players.begin(); iter != Players.end(); iter++)
 	{
-		if (!iter->RemovedFromGame())
-		{
-			cout << "Name : " << iter->GetName() << turnIndicate(iter) << foldedIndicate(iter) << endl;
-			cout << "Balance : $" << iter->GetBalance() << endl;
-			cout << blindIndicate(iter) << endl << endl;
-		}
+		cout << "Name : " << iter->GetName() << turnIndicate(iter) << foldedIndicate(iter) << AllInIndicate(iter) << endl;
+		cout << "Balance : $" << iter->GetBalance() << endl;
+		cout << blindIndicate(iter) << endl << endl;
 	}
 
 	cout << "1) check/call" << " <$" << Current->GetToCall() << ">" << "  2) raise  3)fold  4)outcome  5)exit" << endl << "Input : ";

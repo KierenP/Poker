@@ -10,14 +10,14 @@ Player::Player(string name, int balance)
 	m_Balance = balance;
 	m_Folded = false;
 	m_ToCall = 0;
-	m_OutOfGame = false;
+	m_AllIn = false;
 }
 
 int Player::AllIn()
 {
 	int balance = m_Balance;
 	m_Balance = 0;
-	m_Folded = true;
+	m_AllIn = true;
 	return balance;
 }
 
